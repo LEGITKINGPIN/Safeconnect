@@ -73,7 +73,8 @@ async function startServer() {
 
         // Tell both users they are matched
         // Peer 1 (initiator) gets one role, Peer 2 (receiver) gets the other
-        io.to(roomId).emit('matched', { roomId });
+        socket.emit('matched', { roomId, initiator: true });
+        peer.socket.emit('matched', { roomId, initiator: false });
       } else {
         waitingQueue.push({ id: socket.id, interests, socket });
       }

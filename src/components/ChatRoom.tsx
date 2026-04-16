@@ -81,7 +81,7 @@ export default function ChatRoom() {
     const s = io(window.location.origin);
     setSocket(s);
 
-    s.on('matched', ({ roomId }) => {
+    s.on('matched', ({ roomId, initiator }) => {
       setRoomId(roomId);
       setStatus('connected');
       addMessage({
@@ -93,7 +93,7 @@ export default function ChatRoom() {
       setIsBlurred(true); // Default blur for safety
 
       if (chatMode === 'video') {
-         startWebRTC(roomId, true, s); // Pass socket to avoid closure issues
+         startWebRTC(roomId, initiator, s); // Pass socket to avoid closure issues
       }
     });
 
