@@ -30,7 +30,7 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-bg overflow-hidden relative">
+    <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-bg overflow-x-hidden relative">
       {/* Background Orbs */}
       <div className="absolute top-1/4 -left-20 w-80 h-80 bg-accent/20 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-accent/10 rounded-full blur-[120px] pointer-events-none" />

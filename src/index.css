@@ -18,7 +18,7 @@
 
 @layer base {
   body {
-    @apply bg-bg text-text-primary font-sans antialiased overflow-hidden h-screen w-screen;
+    @apply bg-bg text-text-primary font-sans antialiased min-h-screen overflow-x-hidden;
   }
 
   /* Custom scrollbar */
