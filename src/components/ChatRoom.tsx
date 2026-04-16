@@ -60,6 +60,27 @@ export default function ChatRoom() {
     }
   };
 
+  // Immediate Local Media Preview
+  useEffect(() => {
+    const initLocalMedia = async () => {
+      if (chatMode === 'video' && !localStream) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ 
+            video: true, 
+            audio: true 
+          });
+          setLocalStream(stream);
+          if (localVideoRef.current) {
+            localVideoRef.current.srcObject = stream;
+          }
+        } catch (err) {
+          console.error('Error accessing media:', err);
+        }
+      }
+    };
+    initLocalMedia();
+  }, [chatMode]);
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
@@ -80,7 +101,9 @@ export default function ChatRoom() {
 
   // Initial Socket Setup
   useEffect(() => {
-    const s = io(window.location.origin);
+    // Use VITE_BACKEND_URL from environment or fallback to origin for same-domain deployment
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || window.location.origin;
+    const s = io(backendUrl);
     setSocket(s);
 
     s.on('matched', ({ roomId, initiator }) => {
@@ -142,21 +165,25 @@ export default function ChatRoom() {
 
       peerRef.current = pc;
 
+      // Handle remote tracks
       pc.ontrack = (event) => {
+        console.log('Received remote track');
         setRemoteStream(event.streams[0]);
         if (remoteVideoRef.current) {
           remoteVideoRef.current.srcObject = event.streams[0];
         }
       };
 
+      // Handle ICE candidates
       pc.onicecandidate = (event) => {
         if (event.candidate) {
           activeSocket.emit('signal', { roomId: rId, signal: event.candidate });
         }
       };
 
-      // Define signal processor
+      // Process incoming signals
       const processSignal = async (signal: any) => {
+        if (!pc) return;
         try {
           if (signal.type === 'offer') {
             await pc.setRemoteDescription(new RTCSessionDescription(signal));
@@ -169,7 +196,7 @@ export default function ChatRoom() {
             await pc.addIceCandidate(new RTCIceCandidate(signal));
           }
         } catch (err) {
-          console.error('Signaling error in processSignal:', err);
+          console.error('Signaling error:', err);
         }
       };
 
@@ -181,25 +208,29 @@ export default function ChatRoom() {
         }
       });
 
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: true, 
-        audio: true 
-      });
-      setLocalStream(stream);
-      if (localVideoRef.current) {
-        localVideoRef.current.srcObject = stream;
+      // Ensure local tracks are added
+      let stream = localStream;
+      if (!stream) {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        setLocalStream(stream);
+        if (localVideoRef.current) localVideoRef.current.srcObject = stream;
       }
 
-      stream.getTracks().forEach(track => pc.addTrack(track, stream));
+      stream.getTracks().forEach(track => {
+        if (peerRef.current) {
+          peerRef.current.addTrack(track, stream!);
+        }
+      });
 
       isMediaReady.current = true;
 
-      // Process backlog
+      // Flush queue
       for (const queued of signalQueue.current) {
         await processSignal(queued);
       }
       signalQueue.current = [];
 
+      // If initiator, create the offer
       if (initiator) {
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
@@ -211,15 +242,22 @@ export default function ChatRoom() {
   };
 
   const cleanupWebRTC = () => {
-    if (localStream) {
-      localStream.getTracks().forEach(track => track.stop());
-      setLocalStream(null);
-    }
     if (peerRef.current) {
       peerRef.current.close();
       peerRef.current = null;
     }
     setRemoteStream(null);
+    if (remoteVideoRef.current) {
+      remoteVideoRef.current.srcObject = null;
+    }
+  };
+
+  const handleStop = () => {
+    if (socket) {
+      socket.emit('leave-room');
+    }
+    cleanupWebRTC();
+    setStatus('idle');
   };
 
   const handleNext = () => {
@@ -435,8 +473,9 @@ export default function ChatRoom() {
             {/* Main Action Controls */}
             <div className="flex items-center gap-3 shrink-0 py-2">
               <button 
-                onClick={() => setStatus('idle')}
-                className="px-6 py-3 rounded-xl bg-danger/10 border border-danger/20 text-danger font-bold text-sm hover:bg-danger/20 transition-all active:scale-95"
+                onClick={handleStop}
+                disabled={status === 'idle'}
+                className="px-6 py-3 rounded-xl bg-danger/10 border border-danger/20 text-danger font-bold text-sm hover:bg-danger/20 transition-all active:scale-95 disabled:opacity-30"
               >
                 Stop
               </button>
@@ -445,7 +484,7 @@ export default function ChatRoom() {
                 disabled={status === 'searching'}
                 className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-accent text-white font-bold text-sm hover:bg-accent-hover transition-all active:scale-[0.98] shadow-lg shadow-accent/20 disabled:opacity-50"
               >
-                {status === 'searching' ? 'Finding someone...' : 'Next Stranger'}
+                {status === 'idle' ? 'Start Chatting' : status === 'searching' ? 'Finding someone...' : 'Next Stranger'}
                 <ArrowRight className="w-4.5 h-4.5" />
               </button>
               <button className="flex items-center gap-2 px-5 py-3 rounded-xl bg-surface-bright border border-border font-bold text-sm hover:border-text-secondary transition-colors group">

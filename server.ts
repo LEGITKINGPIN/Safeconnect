@@ -36,26 +36,20 @@ async function startServer() {
     console.log('User connected:', socket.id);
 
     socket.on('join-queue', ({ interests }: { interests: string[] }) => {
-      // Clean up previous room if exists
-      const oldRoomId = userToRoom.get(socket.id);
-      if (oldRoomId) {
-        socket.to(oldRoomId).emit('peer-disconnected');
-        socket.leave(oldRoomId);
-        userToRoom.delete(socket.id);
-        activeRooms.delete(oldRoomId);
-      }
+      // 1. Clean up potential old state
+      handleDisconnect(socket);
 
-      // Check for match
+      // 2. Check for a match in the waiting queue
       let matchIdx = -1;
 
-      // 1. Try interest-based match
+      // Try interest-based match first
       if (interests.length > 0) {
         matchIdx = waitingQueue.findIndex(u => 
           u.interests.some(interest => interests.includes(interest))
         );
       }
 
-      // 2. Fallback to any random match
+      // Fallback to random match
       if (matchIdx === -1 && waitingQueue.length > 0) {
         matchIdx = 0;
       }
@@ -71,12 +65,16 @@ async function startServer() {
         userToRoom.set(socket.id, roomId);
         userToRoom.set(peer.id, roomId);
 
-        // Tell both users they are matched
-        // Peer 1 (initiator) gets one role, Peer 2 (receiver) gets the other
+        // Notify both users
+        // Initiator starts the WebRTC offer
         socket.emit('matched', { roomId, initiator: true });
         peer.socket.emit('matched', { roomId, initiator: false });
+        
+        console.log(`Matched ${socket.id} with ${peer.id} in ${roomId}`);
       } else {
+        // No match found, add to queue
         waitingQueue.push({ id: socket.id, interests, socket });
+        console.log(`User ${socket.id} added to queue`);
       }
     });
 
@@ -89,8 +87,9 @@ async function startServer() {
       });
     });
 
-    // WebRTC Signaling
+    // WebRTC Signaling Relay
     socket.on('signal', ({ roomId, signal }) => {
+      // Relay logic: Send to everyone in the room except the sender
       socket.to(roomId).emit('signal', { signal });
     });
 
@@ -104,18 +103,21 @@ async function startServer() {
     });
 
     function handleDisconnect(s: any) {
-      // Remove from queue
+      // Remove from waiting queue if present
       const qIdx = waitingQueue.findIndex(u => u.id === s.id);
       if (qIdx !== -1) {
         waitingQueue.splice(qIdx, 1);
+        console.log(`User ${s.id} removed from queue`);
       }
 
-      // Notify peer in room
+      // Handle active room cleanup
       const roomId = userToRoom.get(s.id);
       if (roomId) {
+        // Notify the other peer
         s.to(roomId).emit('peer-disconnected');
-        userToRoom.delete(s.id);
         
+        // Clean up mappings
+        userToRoom.delete(s.id);
         const peers = activeRooms.get(roomId);
         if (peers) {
           const otherPeerId = peers.find(id => id !== s.id);
@@ -124,6 +126,10 @@ async function startServer() {
           }
           activeRooms.delete(roomId);
         }
+        
+        // Leave the physical room
+        s.leave(roomId);
+        console.log(`Cleaned up room ${roomId} for ${s.id}`);
       }
     }
   });
