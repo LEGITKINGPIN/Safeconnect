@@ -1,5 +1,7 @@
 # SafeConnect
 
+> 🟢 **LIVE DEMO**: [Click here to join the live session!](https://vid-seasons-regulated-trademark.trycloudflare.com/)
+
 A modern, production-ready anonymous chat platform inspired by Omegle, but designed with a focus on safety, AI moderation, and user privacy.
 
 ## ✨ Features
