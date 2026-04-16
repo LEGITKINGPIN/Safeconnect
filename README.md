@@ -18,7 +18,6 @@ A modern, production-ready anonymous chat platform inspired by Omegle, but desig
 
 - **Frontend**: React 19, Tailwind CSS 4, motion, Zustand, Socket.io-client. (Hosted on **Vercel**)
 - **Backend**: Node.js, Express, Socket.io (Matchmaking & Signaling). (Hosted on **Render**)
-- **AI**: Google Gemini API (@google/genai).
 - **Communication**: WebRTC (P2P) + WebSockets.
 
 ## 🚀 Setup & Deployment
