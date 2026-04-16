@@ -48,16 +48,50 @@
 
 /* Mobile-Specific Responsive Overrides */
 @media (max-width: 768px) {
-  /* 3. Overflow / scrollbar bounds */
-  body, html, #root {
+  /* 4. Horizontal Scrollbar bounds */
+  html, body {
     overflow-x: hidden !important;
     max-width: 100vw !important;
-    width: 100% !important;
   }
-  
-  main, aside {
-    max-width: 100vw !important;
+  * {
     box-sizing: border-box !important;
+  }
+
+  main, aside, #root, .flex-col, header {
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+  }
+
+  /* 1. Header Row Overflow */
+  header {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    width: 100% !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    height: auto !important;
+    min-height: 64px !important;
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+    gap: 8px !important;
+  }
+  header h1 {
+    font-size: clamp(1rem, 4vw, 1.4rem) !important;
+  }
+  header > div:last-child {
+    gap: 8px !important;
+  }
+  header .text-\[12px\], header .text-\[11px\] {
+    font-size: 0.7rem !important;
+  }
+  header .px-3 {
+    padding: 4px 8px !important;
+  }
+  header button {
+    font-size: 0.75rem !important;
+    white-space: nowrap !important;
+    padding: 4px 8px !important;
   }
 
   /* 2. Video layout stack */
@@ -66,7 +100,7 @@
     flex-direction: column !important;
     background: transparent !important;
     border: none !important;
-    gap: 16px !important;
+    gap: 8px !important;
     overflow: visible !important;
   }
 
@@ -75,15 +109,19 @@
     position: relative !important;
     inset: auto !important;
     width: 100% !important;
-    height: 45vw !important;
-    min-height: 180px !important;
-    border-radius: 12px !important;
+    height: 35vh !important;
+    max-height: 260px !important;
+    min-height: auto !important;
+    border-radius: 8px !important;
     overflow: hidden !important;
     border: 1px solid var(--color-border) !important;
     background: black !important;
   }
+  .group.bg-black.border-border > div.absolute.inset-0.z-0 video {
+    object-fit: cover !important;
+  }
 
-  /* 4. Center the "CONNECTING TO STREAM" text */
+  /* Center the "CONNECTING TO STREAM" text */
   .group.bg-black.border-border > div.absolute.inset-0.z-0 > div.flex-col {
     position: absolute !important;
     inset: 0 !important;
@@ -96,43 +134,77 @@
     position: relative !important;
     inset: auto !important;
     width: 100% !important;
-    height: 30vw !important;
-    min-height: 140px !important;
+    height: 22vh !important;
+    max-height: 180px !important;
+    min-height: auto !important;
     aspect-ratio: auto !important;
     transform: none !important;
-    border-radius: 12px !important;
+    border-radius: 8px !important;
     border: 1px solid var(--color-border) !important;
     background: black !important;
     margin: 0 !important;
   }
+  .group.bg-black.border-border > div.group\/local video {
+    object-fit: cover !important;
+  }
 
-  /* 1. Floating media controls */
+  /* 3. Floating media controls */
   .group.bg-black.border-border > div.z-40.flex.items-center {
-    position: relative !important;
-    inset: auto !important;
-    transform: none !important;
+    display: flex !important;
+    flex-direction: row !important;
     justify-content: center !important;
-    opacity: 1 !important;
+    align-items: center !important;
+    gap: 16px !important;
     width: 100% !important;
+    padding: 8px 0 !important;
+    position: static !important;
+    transform: none !important;
     margin: 0 !important;
   }
+  .group.bg-black.border-border > div.z-40.flex.items-center > button {
+    min-width: 44px !important;
+    min-height: 44px !important;
+    margin: 0 !important;
+    transform: none !important;
+    position: static !important;
+  }
 
-  /* 5. Chat section input box single row */
+  /* 5. Chat Section */
+  aside {
+    width: 100% !important;
+    overflow: hidden !important;
+    min-height: 180px !important;
+    height: auto !important;
+  }
+  aside > div.flex-1.overflow-y-auto {
+    max-height: 25vh !important;
+  }
+  .fixed.bottom-4.left-4 {
+    font-size: 0.6rem !important;
+    opacity: 0.3 !important;
+    overflow: hidden !important;
+    white-space: nowrap !important;
+    text-overflow: ellipsis !important;
+    max-width: 100vw !important;
+  }
   aside form {
     display: flex !important;
-    flex-wrap: nowrap !important;
+    width: 100% !important;
     gap: 8px !important;
   }
-  aside input {
-    flex: 1 1 auto !important;
+  aside form input {
+    flex: 1 1 0% !important;
     min-width: 0 !important; 
+  }
+  aside form button {
+    flex-shrink: 0 !important;
   }
 
   /* 6. Action buttons row */
   main .shrink-0.py-2 {
     display: flex !important;
     flex-wrap: wrap !important;
-    gap: 6px !important;
+    gap: 8px !important;
     width: 100% !important;
   }
   main .shrink-0.py-2 > button {
